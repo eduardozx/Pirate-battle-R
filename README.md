@@ -401,9 +401,3 @@ tests/
 scripts/
 └─ measure-performance.mjs   Performance harness
 ```
-
-## Known limitations
-
-Listed with reasons in [ARCHITECTURE.md §8](./ARCHITECTURE.md#8-known-limitations)
-and measured gaps in [docs/PERFORMANCE.md §6](./docs/PERFORMANCE.md): no audio, soft
-ship rendering on HiDPI, hand-tuned balance, and no GPU-side timing.

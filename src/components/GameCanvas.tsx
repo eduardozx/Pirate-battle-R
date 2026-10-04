@@ -72,14 +72,19 @@ class TickerDriver {
 /**
  * Profiling is opt-in and read from the URL.
  *
- * Gated on `import.meta.env.DEV` so a shipped build carries no way to turn it on,
- * and driven by a query parameter rather than a config file so a profiled run and a
- * clean run differ by nothing except the URL. When off, the frame driver contains
- * no timestamps and no sample writes - see `FrameProfiler.measure`.
+ * Gated on `import.meta.env.DEV || import.meta.env.PROFILE` so a shipped build
+ * carries no way to turn it on, and driven by a query parameter rather than a
+ * config file so a profiled run and a clean run differ by nothing except the URL.
+ * `PROFILE` is `true` only for `vite build --mode profile` (`npm run build:profile`)
+ * — the same optimised build with the profiler compiled in, which is how CPU cost
+ * and entity counts get measured off a production bundle; the deployed build gets
+ * `false` here and the whole block is minified away, exactly like the dev branch.
+ * When off, the frame driver contains no timestamps and no sample writes — see
+ * `FrameProfiler.measure`.
  */
 const profiler = new FrameProfiler();
 
-if (import.meta.env.DEV && typeof location !== 'undefined') {
+if ((import.meta.env.DEV || import.meta.env.PROFILE) && typeof location !== 'undefined') {
   profiler.setEnabled(new URLSearchParams(location.search).has('profile'));
 
   /* Read surface for the profiling harness. It returns the summary on demand

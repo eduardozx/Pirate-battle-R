@@ -69,7 +69,16 @@ function readFileSafe(filePath: string): Buffer {
   }
 }
 
-export default defineConfig({
+export default defineConfig(({ mode }) => ({
+  /* Profiling is compiled in only for `vite build --mode profile`
+     (`npm run build:profile`), the optimised build the performance harness
+     measures. Every other build — including the deployed one — sees `false`,
+     and the minifier drops the profiler along with its read surface, exactly as
+     it drops the `import.meta.env.DEV` branches. A `define` rather than an
+     environment variable, so nothing a deployment inherits can switch it on. */
+  define: {
+    'import.meta.env.PROFILE': JSON.stringify(mode === 'profile'),
+  },
   plugins: [react(), serveRootAssets()],
   resolve: {
     alias: {
@@ -85,4 +94,4 @@ export default defineConfig({
     assetsInlineLimit: 4096,
     chunkSizeWarningLimit: 900,
   },
-});
+}));

@@ -7,11 +7,13 @@ import { chromium } from 'playwright';
  * Plays real matches and reports two different things, because they answer two
  * different questions:
  *
- *   - the PROFILER (`?profile`, dev builds only) times what the CPU spent inside
- *     the frame callback: simulation, render, frame cost, live entity count.
+ *   - the PROFILER (`?profile`) times what the CPU spent inside the frame
+ *     callback: simulation, render, frame cost, live entity count. It is compiled
+ *     into dev builds and into `npm run build:profile` — the optimised bundle,
+ *     measured as such — and out of the deployed build entirely.
  *   - a page-side rAF SAMPLER times how far apart frames arrived. It needs no
- *     instrumentation at all, which is what makes it usable against a production
- *     build — where the profiler is deliberately compiled out.
+ *     instrumentation at all, so it works against any build, including the plain
+ *     `npm run build` output where the profiler does not exist.
  *
  * Usage:
  *   node scripts/measure-performance.mjs [baseUrl]        # dev server
@@ -46,7 +48,7 @@ const waitForServer = async (url, timeoutMs) => {
     }
     await new Promise((resolve) => setTimeout(resolve, 250));
   }
-  throw new Error(`${url} did not come up — run \`npm run build\` first`);
+  throw new Error(`${url} did not come up — run \`npm run build:profile\` first`);
 };
 
 let preview = null;
@@ -196,7 +198,9 @@ const run = async (label, url, seconds, holdKeys = [], options = {}) => {
   return row;
 };
 
-console.log(`=== PERFORMANCE @ ${BASE}${prod ? ' (PRODUCTION build via vite preview)' : ''} ===\n`);
+console.log(
+  `=== PERFORMANCE @ ${BASE}${prod ? ' (PRODUCTION build via vite preview, profiler compiled in)' : ''} ===\n`,
+);
 console.log('NOTE: frame CPU cost is the number this project controls. Achieved FPS');
 console.log('      here is bounded by software rasterisation in a container with no');
 console.log('      GPU, and by nothing in the game. Read them separately.\n');
@@ -240,8 +244,9 @@ for (const row of profiled) {
 }
 if (profiled.length !== measured.length) {
   console.log(
-    '(production build: the profiler is compiled out, so CPU cost and entity counts' +
-      ' are reported only for the instrumented dev runs — see docs/PERFORMANCE.md §4.)',
+    '(this build carries no profiler: the deployed `npm run build` output has it' +
+      ' compiled out, so CPU cost and entity counts are only available from the dev' +
+      ' run or from `npm run build:profile` — see docs/PERFORMANCE.md §2.1.)',
   );
 }
 
@@ -258,8 +263,12 @@ console.log('\n--- worst observed ---');
 const worstRaf = measured.reduce((acc, r) => (r.rafP95 > acc.rafP95 ? r : acc), measured[0]);
 if (profiled.length > 0) {
   const worst = profiled.reduce((acc, r) => (r.frameP99 > acc.frameP99 ? r : acc), profiled[0]);
+  const worstFrame = profiled.reduce((acc, r) => (r.frameMax > acc.frameMax ? r : acc), profiled[0]);
+  /* Two different questions, so two different rows: the worst TYPICAL tail (the
+     highest p99) and the single worst frame anywhere in the run. Reporting the
+     second from the first's row would name a scenario, not a frame. */
   console.log(`worst frame-cost p99: ${worst.frameP99} ms  (${worst.label})`);
-  console.log(`worst single frame:   ${worst.frameMax} ms`);
+  console.log(`worst single frame:   ${worstFrame.frameMax} ms  (${worstFrame.label})`);
 }
 console.log(`worst frame-time p95: ${worstRaf.rafP95} ms between frames  (${worstRaf.label})`);
 console.log(`60 fps budget:        ${round(BUDGET_60)} ms`);

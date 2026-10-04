@@ -425,9 +425,9 @@ counterpart would fabricate freshness.
 - **Ships are soft on HiDPI** until the build-time 2× atlas lands (§5.1).
 - **Balance is hand-tuned**, not measured against a target difficulty curve.
 - **No GPU-side timing.** Frame CPU cost is measured and healthy (worst p99
-  7.3 ms against a 16.67 ms budget), but PixiJS submits rasterisation
-  asynchronously, so draw-call scaling as the arena fills is unmeasured. See
-  [PERFORMANCE.md §6](./docs/PERFORMANCE.md).
+  3.5 ms, worst single frame 7.6 ms, against a 16.67 ms budget), but PixiJS
+  submits rasterisation asynchronously, so draw-call scaling as the arena fills
+  is unmeasured. See [PERFORMANCE.md §6](./docs/PERFORMANCE.md).
 - **Islands are authored masks**, not procedural. Deterministic arenas are worth
   more than variety at this stage, and they guarantee water lanes on all four sides.
 
@@ -489,6 +489,17 @@ Three choices make its output trustworthy:
 - **An injected clock.** Tests drive time deterministically instead of
   monkey-patching a global the frame path also reads — which is how the first
   version of these tests ended up asserting nothing at all.
+
+**Which builds carry it.** Dev builds always; the deployed build never. Both
+`import.meta.env.DEV` and `import.meta.env.PROFILE` are replaced by a literal at
+build time, so the minifier drops the profiler and its read surface from
+`npm run build` — the grep in the README checks `dist/` rather than trusting that.
+`npm run build:profile` (`vite build --mode profile`) is the same optimised
+bundle with that one flag flipped, which is how [PERFORMANCE.md §2.1](./docs/PERFORMANCE.md)
+can quote CPU cost and entity counts measured *on* a production bundle instead of
+inferred from the dev one. The test hook, the `?sessionSeconds=` override and the
+URL-parameter options stay behind `import.meta.env.DEV` in every mode: profiling
+measures the game, it does not play it.
 
 The measured region is JavaScript CPU work. GPU rasterisation is submitted
 asynchronously and happens after the callback returns, so it is not captured. That

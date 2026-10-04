@@ -2,8 +2,10 @@
 
 The committed, readable half of the delivery's "test reports". The other half is
 generated: every `npm run test:e2e` writes a self-contained HTML report to
-`playwright-report/` (`npm run test:e2e:report` opens it), and a copy of the
-report for this delivery is kept under [`docs/reports/`](./reports/).
+`playwright-report/` (`npm run test:e2e:report` opens it), and the report of this
+delivery's run is committed as
+[`docs/reports/playwright-2026-10-04/index.html`](./reports/playwright-2026-10-04/index.html)
+— one file, open it straight from the repository.
 
 **Run:** 2026-10-04 · Playwright 1.63.0 / Chromium · Node 26.10 · 4-vCPU container,
 no GPU · two workers · both projects.
@@ -23,8 +25,15 @@ desktop run reports them as skipped instead of passing them vacuously.
 Unit tests, run separately: **147 passed / 147** across 8 files (`npx vitest run`),
 plus `npx tsc --noEmit` clean and `npm run lint` at 0 errors / 0 warnings.
 
-The suite was run four times while preparing this delivery (two before the
-reporting change, two after) with no failures.
+The suite was run eight times while preparing this delivery — this report is the
+last of them, on the final configuration. Exactly one run failed, on
+`controls.spec.ts` — "an island stops the hull instead of yielding to it" — and
+the cause was the test, not the game: its drive was built from four round trips
+to the browser, so a loaded machine added distance the assertion never accounted
+for and the hull ended up sailing *round* the island, which is legal navigation.
+The drive now runs inside a single `page.evaluate` with the hull sampled every
+50 ms; eight consecutive repeats pass, and so does every full run since — this
+one included.
 
 ## Coverage against the brief's §8 list
 
@@ -70,7 +79,9 @@ once, on a machine nobody else can reach.
 - **Simulation time, not wall time.** Assertions step the game's own clock
   (`window.__pbTest.advance`), and the input helpers run an entire hold inside one
   `page.evaluate`, so a round trip on a loaded box cannot change what the test
-  measured.
+  measured. The island-confinement spec goes further: it samples the hull every
+  50 ms *during* the drive, which is why a hull that crossed the land could not
+  slip between two samples.
 - **Read-only instrumentation.** The hook exposes a snapshot, event counters and
   the clock. It has no spawn, no damage and no teleport: a test that mutates the
   rules can no longer fail for breaking them.

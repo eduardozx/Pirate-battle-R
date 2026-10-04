@@ -1,7 +1,8 @@
 # Progress
 
-Last updated: after the ESLint gate, the new end-to-end specs and the final
-documentation pass.
+Last updated: after the delivery pass — HTML report and traces always on,
+deterministic drives, the optimised-build measurement (`build:profile`) and the
+committed report artifacts under `docs/reports/`.
 
 ## Status
 
@@ -10,7 +11,7 @@ documentation pass.
 | A — Gameplay core | Complete | 147 headless rule tests; frame-rate independence verified at 30/60/144 fps; the profiler now reports how many entities each frame carried |
 | B — Architecture | Complete | Engine is PixiJS-free and React-free; React never re-renders per frame |
 | C — Data layer | Complete | 124 Playwright tests across 13 specs: all four remote states, every failure scenario, and exactly one record per match |
-| D — Tests & docs | Complete | 147 unit + 124 E2E (14 of them visual baselines), ESLint reporting 0 errors / 0 warnings, and `README.md`, `ARCHITECTURE.md`, `docs/PERFORMANCE.md`, this file |
+| D — Tests & docs | Complete | 147 unit + 124 E2E (14 of them visual baselines), ESLint at 0 errors / 0 warnings, `README.md`, `ARCHITECTURE.md`, `docs/TEST-REPORT.md`, `docs/PERFORMANCE.md`, this file — plus the committed artifacts under `docs/reports/`: the HTML test report and the raw dev and optimised-build performance output |
 
 ## Verification gates
 
@@ -22,7 +23,9 @@ vitest run              147 passed
 eslint .                0 errors, 0 warnings
 vite build              succeeds (and carries no test seam — see README, "The test seam")
 playwright test         124 tests: 120 passed + 4 skipped (touch, desktop project), twice in a row
-npm run measure         worst frame p99 7.3 ms; heap delta 0.00 MB over 5 cycles
+npm run measure         worst frame p99 3.0 ms (worst single frame 7.6 ms); heap −3.33 MB over 5 cycles
+npm run measure:prod    optimised build: 3-min match fps 11.4, frame-time p95 100 ms, entities 6/11,
+                        frame cost p95 1.3 ms, heap −1.43 MB, 0 page errors
 ```
 
 The Playwright suite, including the visual baselines, was run twice consecutively
@@ -40,16 +43,23 @@ which confirms the test seam is genuinely stripped from production.
 
 | | Result |
 | --- | --- |
-| Worst frame cost, p99 | 7.3 ms (budget 16.67 ms) |
-| Typical play | 6–9× headroom |
-| Entities carried per frame (peak) | 9 — against a design ceiling of the player, 9 enemies at once and what is in flight |
-| Heap growth, 5 enter/exit cycles | 0.00 MB |
+| Worst CPU cost per frame, p99 | 3.5 ms dev, **3.0 ms optimised** (budget 16.67 ms) |
+| Worst single frame observed | 7.6 ms dev, **4.0 ms optimised** → 4.2× headroom |
+| Typical play | 6.9–9.8× dev, 5.0–10.4× optimised |
+| 3-minute match, optimised build | fps 11.4, frame-time p95 100 ms, entities **6/11**, frame cost p95 1.3 ms, 8.3× headroom |
+| Entities carried per frame (peak) | 11 — against a design ceiling of the player, 9 enemies at once and what is in flight |
+| Heap growth, 5 enter/exit cycles | −3.33 MB (dev), **−1.43 MB (optimised)** |
 | Simulation cost, first second vs last | flat |
 
-The harness reports ~10.8 fps, which is **not** a result: the container has no GPU,
-so Chromium rasterises in software and offers frames ~94 ms apart. The app spends
-~2 ms of each frame and waits for the next. Method and caveats:
-[PERFORMANCE.md](./PERFORMANCE.md).
+The harness reports ~10–11 fps, which is **not** a result: the container has no GPU,
+so Chromium rasterises in software and offers frames ~100 ms apart. The app spends
+1–3 ms of each frame and waits for the next. Frame-time percentiles are reported
+anyway, because the brief asks for them — and because the sampler needs no
+instrumentation, so it works on any build. `measure:prod` runs `build:profile`,
+the optimised bundle with the profiler compiled in, which is how **fps, frame-time
+percentiles, CPU cost and entity counts are all read off a production build**
+instead of inferring half of them from the dev one. Method and caveats:
+[PERFORMANCE.md](./PERFORMANCE.md), raw outputs in [reports/](./reports/).
 
 ## Defects found and fixed
 
@@ -167,6 +177,18 @@ Every one of these was found by a test or a browser check, not by reading the co
   (exact simulation time, the same reasoning as `scriptInputs`), and heading
   comparisons subtract through `headingDelta`, which folds the difference into
   (−π, π]. A coordinate seam can no longer read as a direction.
+- **The island-confinement spec failed 7 runs in 8** for the same reason in a
+  different costume. Its drive was four `keyboard.down` / `advance` round trips,
+  so a loaded machine kept stepping the simulation while Playwright was in
+  transit and the hull travelled further than the 2000 ms the test believed it
+  had driven. It reached the island's face, slid along it and came round the
+  north end — legal navigation, which the assertion read as the island yielding.
+  The drive is now a `drive()` helper: one `page.evaluate`, exactly 2000 ms of
+  simulation, the hull sampled every 50 ms. Two consequences: load can no longer
+  add distance, and a hull crossing between two samples can no longer slip past
+  the in-solid check. Eastward progress is also judged only while the hull is at
+  the island's own *latitude*, because sailing round the end is not the failure
+  this test is about. Eight consecutive repeats, then a full suite, pass.
 
 ### Code quality
 

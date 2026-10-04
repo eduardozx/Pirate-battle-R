@@ -1,0 +1,38 @@
+npm notice run pirate-battle@0.1.0 measure
+npm notice run node scripts/measure-performance.mjs
+=== PERFORMANCE @ http://localhost:5173 ===
+
+NOTE: frame CPU cost is the number this project controls. Achieved FPS
+      here is bounded by software rasterisation in a container with no
+      GPU, and by nothing in the game. Read them separately.
+
+idle                       raf fps= 10.14 p50/p95/p99=100/116.7/116.8 | frame cost p50/p95/p99=0.8/1.6/3 max=7.6 | sim p50/p95/p99=0.7/1.4/3 | entities=5/6 | heap=20.69MB canvases=1 errors=0
+sailing + firing           raf fps= 11.43 p50/p95/p99=83.4/100.1/100.1 | frame cost p50/p95/p99=0.7/1.2/1.6 max=2.8 | sim p50/p95/p99=0.6/1.1/1.4 | entities=6/11 | heap=18.41MB canvases=0 errors=0
+3-minute match             raf fps= 11.61 p50/p95/p99=83.4/100.1/100.1 | frame cost p50/p95/p99=0.8/1.3/2.2 max=2.3 | sim p50/p95/p99=0.7/1.1/1.9 | entities=6/11 | heap=20.69MB canvases=0 errors=0
+cycle 1/5                  raf fps= 10.77 p50/p95/p99=83.4/116.7/133.3 | frame cost p50/p95/p99=0.7/1.4/1.6 max=1.6 | sim p50/p95/p99=0.6/1.2/1.4 | entities=2/5 | heap=20.69MB canvases=1 errors=0
+cycle 2/5                  raf fps= 11.24 p50/p95/p99=83.4/100.1/100.1 | frame cost p50/p95/p99=0.7/1.5/1.6 max=1.6 | sim p50/p95/p99=0.6/1.3/1.5 | entities=2/5 | heap=17.36MB canvases=1 errors=0
+cycle 3/5                  raf fps= 11.27 p50/p95/p99=83.4/100/100.1 | frame cost p50/p95/p99=0.7/1.5/1.7 max=1.7 | sim p50/p95/p99=0.6/1.3/1.4 | entities=2/5 | heap=22.03MB canvases=1 errors=0
+cycle 4/5                  raf fps= 11.24 p50/p95/p99=83.4/100/100.1 | frame cost p50/p95/p99=0.7/1.4/1.8 max=1.8 | sim p50/p95/p99=0.6/1.2/1.8 | entities=2/5 | heap=17.36MB canvases=1 errors=0
+cycle 5/5                  raf fps= 11.24 p50/p95/p99=83.4/100/100.1 | frame cost p50/p95/p99=0.7/1.3/1.6 max=1.6 | sim p50/p95/p99=0.6/1.1/1.5 | entities=2/5 | heap=17.36MB canvases=1 errors=0
+
+--- headroom (the metric the game actually controls) ---
+idle                       entities peak=   6  frame p95=  1.6 ms  cpu p99=  3.5 ms  fits in the 60 fps budget 4.76x
+sailing + firing           entities peak=  11  frame p95=  1.2 ms  cpu p99=  1.7 ms  fits in the 60 fps budget 9.8x
+3-minute match             entities peak=  11  frame p95=  1.3 ms  cpu p99=  2.4 ms  fits in the 60 fps budget 6.94x
+cycle 1/5                  entities peak=   5  frame p95=  1.4 ms  cpu p99=  1.8 ms  fits in the 60 fps budget 9.26x
+cycle 2/5                  entities peak=   5  frame p95=  1.5 ms  cpu p99=  1.9 ms  fits in the 60 fps budget 8.77x
+cycle 3/5                  entities peak=   5  frame p95=  1.5 ms  cpu p99=    2 ms  fits in the 60 fps budget 8.33x
+cycle 4/5                  entities peak=   5  frame p95=  1.4 ms  cpu p99=  2.2 ms  fits in the 60 fps budget 7.58x
+cycle 5/5                  entities peak=   5  frame p95=  1.3 ms  cpu p99=  1.9 ms  fits in the 60 fps budget 8.77x
+
+--- memory across enter/exit cycles ---
+heap after cycle 1: 20.69 MB   after cycle 5: 17.36 MB   delta: -3.33 MB
+canvases left mounted: 1 (must be 1 in-match)
+page errors: 0
+
+--- worst observed ---
+worst frame-cost p99: 3 ms  (idle)
+worst single frame:   7.6 ms
+worst frame-time p95: 116.7 ms between frames  (idle)
+60 fps budget:        16.67 ms
+achieved fps here:    10.14 (environment-bound, see note above)

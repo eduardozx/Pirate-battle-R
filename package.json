@@ -7,6 +7,7 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",
+    "build:profile": "tsc -b && vite build --mode profile",
     "preview": "vite preview",
     "typecheck": "tsc --noEmit",
     "lint": "eslint .",
@@ -17,7 +18,7 @@
     "test:e2e:report": "playwright show-report",
     "test:visual": "playwright test tests/e2e/visual.spec.ts",
     "measure": "node scripts/measure-performance.mjs",
-    "measure:prod": "npm run build && node scripts/measure-performance.mjs --prod"
+    "measure:prod": "npm run build:profile && node scripts/measure-performance.mjs --prod"
   },
   "dependencies": {
     "@tanstack/react-query": "^5.104.1",

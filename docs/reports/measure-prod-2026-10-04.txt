@@ -1,0 +1,64 @@
+npm notice run pirate-battle@0.1.0 measure:prod
+npm notice run npm run build:profile && node scripts/measure-performance.mjs --prod
+npm notice run pirate-battle@0.1.0 build:profile
+npm notice run tsc -b && vite build --mode profile
+vite v6.4.3 building for profile...
+transforming...
+✓ 1155 modules transformed.
+rendering chunks...
+computing gzip size...
+dist/index.html                               0.61 kB │ gzip:   0.36 kB
+dist/assets/index-BWZz-9td.css               12.59 kB │ gzip:   3.33 kB
+dist/assets/Filter-BqEItZbY.js                0.90 kB │ gzip:   0.48 kB
+dist/assets/CanvasPool-s6Gs5rvu.js            1.89 kB │ gzip:   0.84 kB
+dist/assets/getTexelRangeRects-DzBIJye9.js   10.28 kB │ gzip:   2.73 kB
+dist/assets/webworkerAll-BeS-N6yZ.js         15.46 kB │ gzip:   4.90 kB
+dist/assets/CanvasRenderer-C0qz2beZ.js       17.91 kB │ gzip:   6.02 kB
+dist/assets/BitmapFont-C6IHzalT.js           33.92 kB │ gzip:  11.60 kB
+dist/assets/browserAll-C_i_9ZTA.js           43.96 kB │ gzip:  11.47 kB
+dist/assets/RenderTargetSystem-uZnB7nFD.js   53.95 kB │ gzip:  14.91 kB
+dist/assets/WebGPURenderer-D_Eji4f9.js       55.91 kB │ gzip:  16.09 kB
+dist/assets/WebGLRenderer-BFEaKEId.js        73.67 kB │ gzip:  20.29 kB
+dist/assets/index-DzcsLx5I.js               931.46 kB │ gzip: 302.02 kB
+
+(!) Some chunks are larger than 900 kB after minification. Consider:
+- Using dynamic import() to code-split the application
+- Use build.rollupOptions.output.manualChunks to improve chunking: https://rollupjs.org/configuration-options/#output-manualchunks
+- Adjust chunk size limit for this warning via build.chunkSizeWarningLimit.
+✓ built in 15.10s
+=== PERFORMANCE @ http://localhost:4173 (PRODUCTION build via vite preview, profiler compiled in) ===
+
+NOTE: frame CPU cost is the number this project controls. Achieved FPS
+      here is bounded by software rasterisation in a container with no
+      GPU, and by nothing in the game. Read them separately.
+
+idle                       raf fps= 10.18 p50/p95/p99=100/116.7/133.3 | frame cost p50/p95/p99=0.8/1.6/3 max=4 | sim p50/p95/p99=0.7/1.4/2.8 | entities=5/6 | heap=12.11MB canvases=1 errors=0
+sailing + firing           raf fps= 11.19 p50/p95/p99=83.4/100.1/116.7 | frame cost p50/p95/p99=0.8/1.4/1.9 max=3.7 | sim p50/p95/p99=0.7/1.2/1.8 | entities=6/11 | heap=12.11MB canvases=0 errors=0
+3-minute match             raf fps= 11.38 p50/p95/p99=83.4/100/100.1 | frame cost p50/p95/p99=0.8/1.3/1.7 max=2.1 | sim p50/p95/p99=0.7/1.2/1.6 | entities=6/11 | heap=10.11MB canvases=0 errors=0
+cycle 1/5                  raf fps= 11.24 p50/p95/p99=83.4/100/100.1 | frame cost p50/p95/p99=0.7/1.4/1.8 max=1.8 | sim p50/p95/p99=0.6/1.1/1.6 | entities=2/5 | heap=12.11MB canvases=1 errors=0
+cycle 2/5                  raf fps= 11.33 p50/p95/p99=83.4/100.1/100.1 | frame cost p50/p95/p99=0.7/1.3/1.4 max=1.4 | sim p50/p95/p99=0.6/1.1/1.2 | entities=2/5 | heap=10.11MB canvases=1 errors=0
+cycle 3/5                  raf fps= 11.24 p50/p95/p99=83.4/100/100.1 | frame cost p50/p95/p99=0.8/1.3/1.5 max=1.5 | sim p50/p95/p99=0.7/1.2/1.3 | entities=2/5 | heap=9.54MB canvases=1 errors=0
+cycle 4/5                  raf fps= 11.08 p50/p95/p99=83.4/100.1/150 | frame cost p50/p95/p99=0.7/1.4/1.6 max=1.6 | sim p50/p95/p99=0.6/1.1/1.5 | entities=2/5 | heap=12.78MB canvases=1 errors=0
+cycle 5/5                  raf fps= 11.08 p50/p95/p99=83.4/100.1/116.8 | frame cost p50/p95/p99=0.9/1.8/2.1 max=2.1 | sim p50/p95/p99=0.7/1.6/2 | entities=2/5 | heap=10.68MB canvases=1 errors=0
+
+--- headroom (the metric the game actually controls) ---
+idle                       entities peak=   6  frame p95=  1.6 ms  cpu p99=  3.3 ms  fits in the 60 fps budget 5.05x
+sailing + firing           entities peak=  11  frame p95=  1.4 ms  cpu p99=  2.2 ms  fits in the 60 fps budget 7.58x
+3-minute match             entities peak=  11  frame p95=  1.3 ms  cpu p99=    2 ms  fits in the 60 fps budget 8.33x
+cycle 1/5                  entities peak=   5  frame p95=  1.4 ms  cpu p99=  2.8 ms  fits in the 60 fps budget 5.95x
+cycle 2/5                  entities peak=   5  frame p95=  1.3 ms  cpu p99=  1.6 ms  fits in the 60 fps budget 10.42x
+cycle 3/5                  entities peak=   5  frame p95=  1.3 ms  cpu p99=  1.7 ms  fits in the 60 fps budget 9.8x
+cycle 4/5                  entities peak=   5  frame p95=  1.4 ms  cpu p99=    2 ms  fits in the 60 fps budget 8.33x
+cycle 5/5                  entities peak=   5  frame p95=  1.8 ms  cpu p99=  2.6 ms  fits in the 60 fps budget 6.41x
+
+--- memory across enter/exit cycles ---
+heap after cycle 1: 12.11 MB   after cycle 5: 10.68 MB   delta: -1.43 MB
+canvases left mounted: 1 (must be 1 in-match)
+page errors: 0
+
+--- worst observed ---
+worst frame-cost p99: 3 ms  (idle)
+worst single frame:   4 ms  (idle)
+worst frame-time p95: 116.7 ms between frames  (idle)
+60 fps budget:        16.67 ms
+achieved fps here:    10.18 (environment-bound, see note above)

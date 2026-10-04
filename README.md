@@ -35,6 +35,7 @@ history APIs are mocked in the browser with MSW, including in the production bui
 | --- | --- |
 | `npm run dev` | Dev server with HMR and React StrictMode |
 | `npm run build` | Typecheck (`tsc -b`) then production bundle |
+| `npm run build:profile` | The same production bundle with the profiler compiled in (what `measure:prod` measures) |
 | `npm run preview` | Serve the production build locally |
 | `npm run typecheck` | Types only, no emit |
 | `npm run lint` | ESLint over `src`, `tests`, `scripts` and the config files |
@@ -44,7 +45,7 @@ history APIs are mocked in the browser with MSW, including in the production bui
 | `npm run test:e2e:report` | Open the last HTML Playwright report |
 | `npm run test:visual` | Visual baselines only (menu, arena, result — both viewports) |
 | `npm run measure` | Performance harness against the dev server |
-| `npm run measure:prod` | Build, serve `dist/` with `vite preview`, measure **that** |
+| `npm run measure:prod` | `build:profile`, serve `dist/` with `vite preview`, measure **that** |
 
 ## Controls
 
@@ -243,7 +244,10 @@ console and the network, in order.
 Every run also writes a self-contained HTML report to `playwright-report/`
 (`npm run test:e2e:report` opens the last one), and
 [`docs/TEST-REPORT.md`](./docs/TEST-REPORT.md) is the committed summary of the
-last full run — the human-readable half of the delivery's "test reports".
+last full run — the human-readable half of the delivery's "test reports". The
+other half is committed as artifacts: the report of the last full run is snapshotted
+under [`docs/reports/`](./docs/reports/), beside the raw performance output
+(`measure-dev-*`, `measure-prod-*`) recorded the same day.
 
 The suite is built to fail the same way twice:
 
@@ -269,18 +273,26 @@ simulation time runs slower than wall time precisely when frames are starved.
 `npm run measure` plays real matches and reports frame-cost percentiles, split
 into simulation and render — plus how many entities each frame was carrying,
 because a percentile without the world size that produced it is not comparable.
-Measured on a dev server:
+`npm run measure:prod` rebuilds `dist/` with the profiler compiled in
+(`build:profile`) and runs the same scenarios against that **optimised bundle**,
+so fps, frame-time p95, CPU cost and entity counts all come off a production build:
 
-| | Result |
-| --- | --- |
-| Worst frame cost, p99 | **7.3 ms** against a 16.67 ms budget |
-| Typical play | 6–9× headroom in the 60 fps budget |
-| Entities per frame (peak) | **9**, against a design ceiling of the player, at most 9 enemies at once, and what is in flight |
-| Heap growth over 5 enter/exit cycles | **0.00 MB** |
+| | dev build | optimised build |
+| --- | --- | --- |
+| Worst CPU cost per frame, p99 | 3.5 ms | **3.0 ms** (budget 16.67 ms) |
+| Worst single frame observed | 7.6 ms | **4.0 ms** → 4.2× headroom |
+| Typical play | 6.9–9.8× headroom | 5.0–10.4× headroom |
+| 3-minute match (the brief's scenario) | entities 6/11, frame cost p95 1.3 ms | entities **6/11**, fps **11.4**, frame time p95 **100 ms**, frame cost p95 **1.3 ms** |
+| Entities per frame (peak) | **11**, against a design ceiling of the player, at most 9 enemies at once, and what is in flight | **11** |
+| Heap over 5 enter/exit cycles | −3.33 MB | **−1.43 MB** |
+| Page errors | 0 | 0 |
 
-Full method, caveats and known gaps in [docs/PERFORMANCE.md](./docs/PERFORMANCE.md).
-Note that the figures come from a dev build, so they are an upper bound; see §4 of
-that document for why the FPS number in the same output is *not* a result.
+Full method, caveats and known gaps in [docs/PERFORMANCE.md](./docs/PERFORMANCE.md);
+raw outputs of both runs in [docs/reports/](./docs/reports/). The achieved-FPS
+column is deliberately *not* a result — §4 of that document explains why: the
+container has no GPU, so frames arrive ~100 ms apart whatever the game does. The
+CPU column is the one that transfers, and it reports 5–10× headroom against the
+60 fps target.
 
 ### The test seam
 
@@ -301,6 +313,12 @@ grep -o '__pbTest\|__pbProfile\|get("sessionSeconds")' dist/assets/*.js
 # every branch behind it (the word "sessionSeconds" survives only as the name of
 # the player-facing option it configures)
 ```
+
+`npm run build:profile` is the deliberate exception: it flips a second define so
+the **profiler** survives into an otherwise normal optimised bundle — that is how
+[performance](#performance) measures CPU cost and entity counts off a production
+build. Run the same grep against it and only `__pbProfile` matches; `__pbTest` and
+the URL overrides are still gone, because the test hook never leaves a dev build.
 
 ## Lint
 
@@ -334,7 +352,8 @@ the browser by MSW, in development and in the production build alike.
 | `CI` | `playwright.config.ts` | Selects the CI profile — one retry, `test.only` forbidden, the HTML reporter enabled, and a dev server started by Playwright instead of reusing the one already running |
 | `NODE_ENV` | Vite, React, tooling | `production` for `npm run build`. Nothing in this repo branches on it directly |
 | *(not an env var)* `BASE_URL` | Vite → `import.meta.env.BASE_URL` | The base path the app is served from, set by `base` in `vite.config.ts` or `vite --base=`. It prefixes the art, the mocked API and the MSW worker, so deploying under a sub-path keeps every URL correct |
-| *(not an env var)* `DEV` | Vite → `import.meta.env.DEV` | Gates every test seam: the `?sessionSeconds=` override, `window.__pbTest` and `window.__pbProfile`. Vite replaces the flag at build time, so a production bundle contains none of them — the grep in **The test seam** above checks `dist/` instead of taking that on faith |
+| *(not an env var)* `DEV` | Vite → `import.meta.env.DEV` | Gates every test seam: the `?sessionSeconds=` override, `window.__pbTest` and, in development, `window.__pbProfile`. Vite replaces the flag at build time, so a production bundle contains none of them — the grep in **The test seam** above checks `dist/` instead of taking that on faith |
+| *(not an env var)* `PROFILE` | `vite.config.ts` → `import.meta.env.PROFILE` | `true` only for `vite build --mode profile`. It compiles the **profiler** — never the test hook — into an otherwise normal optimised bundle, so CPU cost and entity counts can be read off a production build (§9 of the brief) instead of inferred from the dev one. The deployed bundle replaces it with `false` and the minifier drops the whole block |
 
 `npm run measure [baseUrl]` takes the dev server's URL as an argument rather than
 an environment variable.

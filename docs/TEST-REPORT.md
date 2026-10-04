@@ -25,15 +25,20 @@ desktop run reports them as skipped instead of passing them vacuously.
 Unit tests, run separately: **147 passed / 147** across 8 files (`npx vitest run`),
 plus `npx tsc --noEmit` clean and `npm run lint` at 0 errors / 0 warnings.
 
-The suite was run eight times while preparing this delivery — this report is the
-last of them, on the final configuration. Exactly one run failed, on
-`controls.spec.ts` — "an island stops the hull instead of yielding to it" — and
-the cause was the test, not the game: its drive was built from four round trips
-to the browser, so a loaded machine added distance the assertion never accounted
-for and the hull ended up sailing *round* the island, which is legal navigation.
-The drive now runs inside a single `page.evaluate` with the hull sampled every
-50 ms; eight consecutive repeats pass, and so does every full run since — this
-one included.
+The same suite was then run from a **fresh `git clone` of this repository** —
+`npm ci`, `npx playwright test`, nothing else — with the identical result: 120
+passed, 4 skipped. It starts its own dev server from the clone, so no local state
+of this machine is load-bearing.
+
+The suite was run repeatedly while preparing this delivery — the last two runs
+on the final configuration, one of them from a fresh `git clone` — and exactly
+one run failed, on `controls.spec.ts`: "an island stops the hull instead of
+yielding to it". The cause was the test, not the game: its drive was built from
+four round trips to the browser, so a loaded machine added distance the assertion
+never accounted for and the hull ended up sailing *round* the island, which is
+legal navigation. The drive now runs inside a single `page.evaluate` with the
+hull sampled every 50 ms; eight consecutive repeats pass, and so does every full
+run since — including the two quoted here.
 
 ## Coverage against the brief's §8 list
 

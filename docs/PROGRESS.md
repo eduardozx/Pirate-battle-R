@@ -15,24 +15,32 @@ committed report artifacts under `docs/reports/`.
 
 ## Verification gates
 
-All six pass:
+All of it passes:
 
 ```
 tsc --noEmit            clean under strict + noUncheckedIndexedAccess
 vitest run              147 passed
 eslint .                0 errors, 0 warnings
 vite build              succeeds (and carries no test seam — see README, "The test seam")
-playwright test         124 tests: 120 passed + 4 skipped (touch, desktop project), twice in a row
+playwright test         124 tests: 120 passed + 4 skipped (touch, desktop project)
 npm run measure         worst frame p99 3.0 ms (worst single frame 7.6 ms); heap −3.33 MB over 5 cycles
 npm run measure:prod    optimised build: 3-min match fps 11.4, frame-time p95 100 ms, entities 6/11,
                         frame cost p95 1.3 ms, heap −1.43 MB, 0 page errors
+fresh git clone         npm ci + typecheck + lint + vitest + build + full Playwright suite: all green
 ```
 
-The Playwright suite, including the visual baselines, was run twice consecutively
-with no failures. `workers` is pinned to 2 on purpose: the simulation is
-frame-paced rather than wall-clock paced, so parallel WebGL contexts starve frames
-and make time-based assertions fail sporadically. See
-[ARCHITECTURE.md §10](../ARCHITECTURE.md).
+The last line is the delivery requirement "must run from a clean checkout", and
+it was executed rather than assumed: a clone of the committed tree in an empty
+directory, with `npm ci` resolving the lockfile and Playwright starting its own
+dev server from the clone.
+
+The Playwright suite, including the visual baselines, was run repeatedly while
+preparing this delivery — the last two runs on the final configuration, one of
+them from a fresh clone — with a single failure: the wall-clock drive in
+`controls.spec.ts`, fixed and recorded below. `workers` is pinned to 2 on
+purpose: the simulation is frame-paced rather than wall-clock paced, so parallel
+WebGL contexts starve frames and make time-based assertions fail sporadically.
+See [ARCHITECTURE.md §10](../ARCHITECTURE.md).
 
 The production build was also exercised through `vite preview`: MSW registers, the
 ranking and history panels load, a match plays, and teardown leaves no canvas

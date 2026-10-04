@@ -1,0 +1,975 @@
+/* ==========================================================================
+   Pirate Battle — global styles
+   Palette is drawn from the game's own art: deep ocean blues, weathered sand
+   and the gold of the player's sails.
+   ========================================================================== */
+
+:root {
+  --ocean-deep: #05101f;
+  --ocean-mid: #0a1d33;
+  --ocean-light: #12324f;
+  --panel-bg: rgba(9, 24, 41, 0.92);
+  --panel-border: rgba(120, 190, 220, 0.35);
+  --text-primary: #eaf4fb;
+  --text-muted: #9fb8c9;
+  --gold: #f2c14e;
+  --gold-strong: #ffd76b;
+  --danger: #e04b4b;
+  --success: #5ad46a;
+
+  --radius: 10px;
+  --shadow: 0 18px 48px rgba(0, 0, 0, 0.45);
+
+  color-scheme: dark;
+  font-family: 'Segoe UI', system-ui, -apple-system, 'Helvetica Neue', Arial, sans-serif;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  background:
+    radial-gradient(circle at 50% 0%, #12324f 0%, var(--ocean-deep) 62%),
+    var(--ocean-deep);
+  color: var(--text-primary);
+  overflow: hidden;
+  /* Stops mobile double-tap zoom and rubber-banding during play. */
+  touch-action: none;
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.app {
+  position: relative;
+  height: 100%;
+  width: 100%;
+}
+
+/* ------------------------------------------------------------------ layout */
+
+.screen {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  padding: clamp(12px, 3vh, 32px);
+  box-sizing: border-box;
+}
+
+.screen--center {
+  /* `safe center` rather than plain `center`.
+     Centring overflows in BOTH directions when the content is taller than the
+     container, and the part above the scroll origin can never be reached: on a
+     landscape phone (≈390 units tall) that pushed the main menu's Play button to
+     y ≈ −254, completely inaccessible and unscrollable. `safe` falls back to
+     start alignment exactly when centring would overflow, so tall content stays
+     reachable while short content stays centred. */
+  align-items: safe center;
+  justify-content: safe center;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  /* The body disables touch globally to stop rubber-banding during play, but that
+     would make every menu, and the options form, unscrollable by touch. Menus
+     pan vertically; the game canvas keeps `none`. */
+  touch-action: pan-y;
+}
+
+.screen--match {
+  padding: 0;
+  flex-direction: column;
+}
+
+/* ------------------------------------------------------------------- panel */
+
+.panel {
+  width: min(560px, 100%);
+  padding: clamp(20px, 4vw, 36px);
+  background: var(--panel-bg);
+  border: 1px solid var(--panel-border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  backdrop-filter: blur(6px);
+}
+
+.panel--menu {
+  width: min(620px, 100%);
+}
+
+.panel__title {
+  margin: 0 0 6px;
+  font-size: clamp(24px, 4vw, 34px);
+  letter-spacing: 0.5px;
+  color: var(--gold);
+  text-align: center;
+}
+
+.panel__title--logo {
+  font-size: clamp(30px, 6vw, 48px);
+  text-shadow: 0 3px 0 rgba(0, 0, 0, 0.4);
+}
+
+.panel__subtitle {
+  margin: 0 0 18px;
+  text-align: center;
+  font-size: 15px;
+  color: var(--text-muted);
+}
+
+.panel__text {
+  margin: 8px 0;
+  font-size: 14px;
+  line-height: 1.5;
+  text-align: center;
+}
+
+.panel__text--muted {
+  color: var(--text-muted);
+  font-size: 13px;
+}
+
+.panel__error {
+  margin: 10px 0;
+  padding: 10px 12px;
+  font-size: 13px;
+  line-height: 1.5;
+  color: #ffd7d7;
+  background: rgba(224, 75, 75, 0.16);
+  border: 1px solid rgba(224, 75, 75, 0.5);
+  border-radius: 6px;
+  word-break: break-word;
+  text-align: left;
+}
+
+.panel__actions {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+  margin-top: 22px;
+  flex-wrap: wrap;
+}
+
+/* ------------------------------------------------------------------ buttons */
+
+.button {
+  appearance: none;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  padding: 10px 20px;
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+  transition: transform 0.08s ease, filter 0.15s ease, background 0.15s ease;
+}
+
+.button--large {
+  padding: 14px 34px;
+  font-size: 17px;
+  min-width: 180px;
+}
+
+.button--primary {
+  background: linear-gradient(180deg, var(--gold-strong), var(--gold));
+  color: #2a1c00;
+}
+
+.button--secondary {
+  background: linear-gradient(180deg, #2f7fa8, #1d5c80);
+  color: #eaf4fb;
+}
+
+.button--ghost {
+  background: rgba(10, 29, 51, 0.75);
+  border-color: var(--panel-border);
+  color: var(--text-primary);
+}
+
+.button--round {
+  width: 62px;
+  height: 62px;
+  font-size: 22px;
+  color: var(--text-primary);
+  background: rgba(10, 29, 51, 0.8);
+  border: 1px solid var(--panel-border);
+  border-radius: 50%;
+  cursor: pointer;
+  touch-action: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+}
+
+.button--round:hover {
+  filter: brightness(1.08);
+}
+
+.button--round:active {
+  filter: brightness(1.25);
+}
+
+.button:hover {
+  filter: brightness(1.08);
+}
+
+.button:active {
+  transform: translateY(1px);
+}
+
+/* Visible focus is a hard accessibility requirement. */
+.button:focus-visible,
+.tabs__tab:focus-visible,
+.form__input:focus-visible,
+.touch-button:focus-visible,
+.hud__pause-button:focus-visible {
+  outline: 3px solid var(--gold-strong);
+  outline-offset: 2px;
+}
+
+.menu-actions {
+  display: flex;
+  gap: 14px;
+  justify-content: center;
+  flex-wrap: wrap;
+  margin: 20px 0 26px;
+}
+
+/* --------------------------------------------------------------- controls */
+
+.controls-hint {
+  margin: 8px 0 22px;
+  padding-top: 18px;
+  border-top: 1px solid var(--panel-border);
+}
+
+.controls-hint__list {
+  margin: 0;
+  display: grid;
+  gap: 6px;
+}
+
+.controls-hint__row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  font-size: 13px;
+}
+
+.controls-hint__keys kbd {
+  display: inline-block;
+  padding: 3px 8px;
+  font-family: ui-monospace, 'SF Mono', Menlo, monospace;
+  font-size: 12px;
+  background: rgba(255, 255, 255, 0.09);
+  border: 1px solid var(--panel-border);
+  border-bottom-width: 2px;
+  border-radius: 5px;
+}
+
+.controls-hint__action {
+  margin: 0;
+  color: var(--text-muted);
+}
+
+/* -------------------------------------------------------------------- tabs */
+
+.tabs {
+  padding-top: 18px;
+  border-top: 1px solid var(--panel-border);
+}
+
+.tabs__list {
+  display: flex;
+  gap: 8px;
+  justify-content: center;
+}
+
+.tabs__tab {
+  appearance: none;
+  padding: 9px 18px;
+  font: inherit;
+  font-size: 14px;
+  color: var(--text-muted);
+  background: rgba(10, 29, 51, 0.7);
+  border: 1px solid var(--panel-border);
+  border-radius: 7px;
+  cursor: not-allowed;
+}
+
+/* -------------------------------------------------------------------- form */
+
+.form__field {
+  margin-bottom: 20px;
+}
+
+.form__label {
+  display: block;
+  margin-bottom: 6px;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.form__control {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.form__input {
+  flex: 1;
+  min-width: 0;
+  padding: 10px 12px;
+  font: inherit;
+  font-size: 15px;
+  color: var(--text-primary);
+  background: rgba(3, 12, 23, 0.85);
+  border: 1px solid var(--panel-border);
+  border-radius: 7px;
+}
+
+.form__input[aria-invalid='true'] {
+  border-color: var(--danger);
+}
+
+.form__unit {
+  font-size: 13px;
+  color: var(--text-muted);
+}
+
+.form__hint {
+  margin: 6px 0 0;
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+.form__error {
+  margin: 6px 0 0;
+  font-size: 12px;
+  color: #ffb4b4;
+}
+
+.form__note {
+  margin: 18px 0 0;
+  padding-top: 16px;
+  border-top: 1px solid var(--panel-border);
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+/* ---------------------------------------------------------------- progress */
+
+.progress {
+  height: 10px;
+  margin: 16px 0 8px;
+  background: rgba(3, 12, 23, 0.9);
+  border: 1px solid var(--panel-border);
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.progress__fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--gold), var(--gold-strong));
+  transition: width 0.2s ease;
+}
+
+/* ------------------------------------------------------------------- match */
+
+.game-canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.screen--match {
+  background: var(--ocean-deep);
+}
+
+.match-footer {
+  position: absolute;
+  left: 50%;
+  bottom: 10px;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 10px;
+  z-index: 3;
+}
+
+.match-footer .button {
+  padding: 7px 14px;
+  font-size: 12px;
+}
+
+/* --------------------------------------------------------------------- hud */
+
+.hud {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 2;
+  padding: 12px;
+}
+
+.hud__top {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.hud__stat {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 7px 14px;
+  background: rgba(5, 16, 31, 0.72);
+  border: 1px solid var(--panel-border);
+  border-radius: 8px;
+  min-width: 86px;
+}
+
+.hud__label {
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 1.2px;
+  color: var(--text-muted);
+}
+
+.hud__value {
+  font-size: 22px;
+  font-weight: 700;
+  line-height: 1.1;
+  font-variant-numeric: tabular-nums;
+}
+
+.hud__value--time {
+  color: var(--gold);
+}
+
+.hud__value--score {
+  color: var(--text-primary);
+}
+
+.hud__pause-button {
+  margin-left: auto;
+  width: 42px;
+  height: 42px;
+  font-size: 14px;
+  color: var(--text-primary);
+  background: rgba(5, 16, 31, 0.72);
+  border: 1px solid var(--panel-border);
+  border-radius: 8px;
+  cursor: pointer;
+  pointer-events: auto;
+}
+
+.hud__health {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 10px;
+}
+
+.hud__health-track {
+  width: min(280px, 46vw);
+  height: 14px;
+  background: rgba(5, 16, 31, 0.8);
+  border: 1px solid var(--panel-border);
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.hud__health-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #3fa85a, var(--success));
+  transition: width 0.2s ease;
+}
+
+.hud__health-text {
+  font-size: 13px;
+  font-variant-numeric: tabular-nums;
+  color: var(--text-primary);
+}
+
+/* ---------------------------------------------------------------- overlays */
+
+.overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(3, 10, 20, 0.78);
+  z-index: 4;
+}
+
+.overlay__panel {
+  width: min(420px, 88vw);
+  padding: 30px;
+  text-align: center;
+  background: var(--panel-bg);
+  border: 1px solid var(--panel-border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+}
+
+.overlay__title {
+  margin: 0 0 8px;
+  font-size: 26px;
+  color: var(--gold);
+}
+
+.overlay__hint {
+  margin: 0 0 20px;
+  font-size: 13px;
+  color: var(--text-muted);
+}
+
+/* ---------------------------------------------------------- touch controls */
+
+.touch-controls {
+  position: absolute;
+  inset: auto 0 0 0;
+  height: 190px;
+  pointer-events: none;
+}
+
+.touch-controls__group {
+  position: absolute;
+  bottom: 18px;
+  display: flex;
+  gap: 12px;
+  pointer-events: auto;
+}
+
+.touch-controls__group--left {
+  left: 16px;
+}
+
+.touch-controls__group--center {
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+.touch-controls__group--right {
+  right: 16px;
+}
+
+.touch-button {
+  width: 62px;
+  height: 62px;
+  font-size: 22px;
+  color: var(--text-primary);
+  background: rgba(10, 29, 51, 0.8);
+  border: 1px solid var(--panel-border);
+  border-radius: 50%;
+  cursor: pointer;
+  touch-action: none;
+}
+
+.touch-button--primary {
+  width: 76px;
+  height: 76px;
+  font-size: 28px;
+  background: rgba(242, 193, 78, 0.9);
+  color: #2a1c00;
+}
+
+.touch-button--sail {
+  position: absolute;
+  left: 50%;
+  bottom: 104px;
+  transform: translateX(-50%);
+  width: 70px;
+  height: 70px;
+  background: rgba(47, 127, 168, 0.9);
+  pointer-events: auto;
+  touch-action: none;
+}
+
+.touch-button:active {
+  filter: brightness(1.25);
+}
+
+/* ------------------------------------------------------------------ result */
+
+.result__stats {
+  margin: 20px 0 0;
+  display: grid;
+  gap: 2px;
+}
+
+.result__row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 11px 14px;
+  background: rgba(3, 12, 23, 0.5);
+}
+
+.result__row:nth-child(odd) {
+  border-radius: 6px 0 0 6px;
+}
+
+.result__row dt {
+  font-size: 13px;
+  color: var(--text-muted);
+}
+
+.result__row dd {
+  margin: 0;
+  font-size: 17px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ------------------------------------------------------------ accessibility */
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * {
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+  }
+}
+
+/* Portrait phones: the arena is landscape-only, so prompt a rotation. */
+@media (orientation: portrait) and (max-width: 900px) {
+  .screen--match::before {
+    content: 'Rotate your device to landscape';
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 24px;
+    background: rgba(3, 10, 20, 0.95);
+    color: var(--text-primary);
+    font-size: 17px;
+    z-index: 10;
+  }
+
+  .touch-controls {
+    display: none;
+  }
+}
+
+/* ==========================================================================
+   Data layer: records tables, pagination, query states, scenario panel
+   ========================================================================== */
+
+.boot {
+  position: fixed;
+  inset: auto 0 12px 0;
+  text-align: center;
+  font-size: 12px;
+  color: var(--text-muted);
+  z-index: 20;
+  pointer-events: none;
+}
+
+.menu-pending {
+  margin: 0 0 4px;
+  padding: 8px 12px;
+  font-size: 12px;
+  color: var(--gold);
+  background: rgba(242, 193, 78, 0.12);
+  border: 1px solid rgba(242, 193, 78, 0.4);
+  border-radius: 6px;
+  text-align: center;
+}
+
+.tabs__tab--active {
+  color: var(--text-primary);
+  background: rgba(47, 127, 168, 0.5);
+  border-color: var(--gold);
+}
+
+.tabs__panel {
+  margin-top: 14px;
+  min-height: 180px;
+}
+
+.records__filter {
+  margin: 0 0 8px;
+  font-size: 12px;
+  color: var(--text-muted);
+  text-align: left;
+}
+
+.table-scroll {
+  max-height: 240px;
+  overflow-y: auto;
+  border: 1px solid var(--panel-border);
+  border-radius: 7px;
+}
+
+.records__table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+  font-variant-numeric: tabular-nums;
+}
+
+.records__table th {
+  position: sticky;
+  top: 0;
+  padding: 8px 10px;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  color: var(--text-muted);
+  background: rgba(5, 16, 31, 0.97);
+  text-align: left;
+  border-bottom: 1px solid var(--panel-border);
+}
+
+.records__table td {
+  padding: 7px 10px;
+  border-bottom: 1px solid rgba(120, 190, 220, 0.12);
+  text-align: left;
+}
+
+.records__rank {
+  width: 34px;
+  color: var(--gold);
+  font-weight: 700;
+}
+
+.records__score {
+  font-weight: 700;
+  color: var(--gold);
+}
+
+.pagination {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  margin-top: 12px;
+}
+
+.pagination__button {
+  width: 34px;
+  height: 34px;
+  font-size: 17px;
+  color: var(--text-primary);
+  background: rgba(10, 29, 51, 0.8);
+  border: 1px solid var(--panel-border);
+  border-radius: 7px;
+  cursor: pointer;
+}
+
+.pagination__button:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+.pagination__status {
+  font-size: 12px;
+  color: var(--text-muted);
+  min-width: 150px;
+  text-align: center;
+}
+
+.pagination__count {
+  opacity: 0.7;
+}
+
+.pagination__spinner,
+.spinner {
+  display: inline-block;
+  width: 11px;
+  height: 11px;
+  margin-left: 7px;
+  vertical-align: -1px;
+  border: 2px solid rgba(242, 193, 78, 0.3);
+  border-top-color: var(--gold);
+  border-radius: 50%;
+  animation: pb-spin 0.7s linear infinite;
+}
+
+.spinner {
+  display: block;
+  width: 22px;
+  height: 22px;
+  margin: 0 auto 10px;
+  border-width: 3px;
+}
+
+@keyframes pb-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.query-state {
+  padding: 22px 12px;
+  text-align: center;
+  font-size: 13px;
+  color: var(--text-muted);
+}
+
+.query-state--error {
+  color: #ffb4b4;
+}
+
+.query-state--error .button {
+  margin-top: 10px;
+}
+
+/* ---------------------------------------------------------- scenario panel */
+
+.scenarios {
+  margin-top: 18px;
+  padding-top: 16px;
+  border-top: 1px solid var(--panel-border);
+  text-align: left;
+}
+
+.scenarios__title {
+  margin: 0 0 10px;
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 1.1px;
+  color: var(--text-muted);
+}
+
+.scenarios__row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.scenarios__label {
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.scenarios__select {
+  flex: 1;
+  min-width: 190px;
+  padding: 8px 10px;
+  font: inherit;
+  font-size: 13px;
+  color: var(--text-primary);
+  background: rgba(3, 12, 23, 0.9);
+  border: 1px solid var(--panel-border);
+  border-radius: 6px;
+}
+
+.scenarios__description {
+  margin: 8px 0;
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+.scenarios__queue {
+  display: flex;
+  gap: 18px;
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+.scenarios__queue strong {
+  color: var(--gold);
+}
+
+.scenarios__items {
+  margin: 10px 0 0;
+  padding-left: 16px;
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+.scenarios__actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 12px;
+  flex-wrap: wrap;
+}
+
+.scenarios__actions .button {
+  padding: 7px 13px;
+  font-size: 12px;
+}
+
+.result__note {
+  margin: 12px 0 0;
+  font-size: 12px;
+  color: #ffcf8f;
+  text-align: center;
+}
+
+.result__retry {
+  margin-top: 12px;
+  padding: 7px 14px;
+  font-size: 12px;
+}
+
+/* Stale-data banner: a failed background refresh must not blank valid rows. */
+.stale-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 10px;
+  padding: 8px 12px;
+  font-size: 12px;
+  color: #ffcf8f;
+  background: rgba(242, 193, 78, 0.12);
+  border: 1px solid rgba(242, 193, 78, 0.45);
+  border-radius: 6px;
+}
+
+.stale-banner .button {
+  padding: 5px 11px;
+  font-size: 11px;
+  white-space: nowrap;
+}
+
+/* Active power-up indicator: present only while a timed power-up is running. */
+.hud__powerup {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 8px;
+  padding: 6px 12px;
+  font-size: 12px;
+  border-radius: 8px;
+  background: rgba(242, 193, 78, 0.16);
+  border: 1px solid rgba(242, 193, 78, 0.5);
+}
+
+.hud__powerup-label {
+  font-weight: 700;
+  color: var(--gold-strong);
+}
+
+.hud__powerup-timer,
+.hud__shield {
+  font-variant-numeric: tabular-nums;
+  color: var(--text-muted);
+}

@@ -41,7 +41,10 @@ history APIs are mocked in the browser with MSW, including in the production bui
 | `npm run test` | Rule-engine unit tests (headless, no DOM) |
 | `npm run test:e2e` | Playwright end-to-end suite (starts the dev server itself) |
 | `npm run test:e2e:ui` | Playwright interactive mode |
-| `npm run test:e2e:report` | Open the last HTML report |
+| `npm run test:e2e:report` | Open the last HTML Playwright report |
+| `npm run test:visual` | Visual baselines only (menu, arena, result — both viewports) |
+| `npm run measure` | Performance harness against the dev server |
+| `npm run measure:prod` | Build, serve `dist/` with `vite preview`, measure **that** |
 
 ## Controls
 
@@ -183,7 +186,8 @@ npm run test         # 147 rule-engine tests, headless
 npm run test:e2e     # 124 Playwright tests, desktop + landscape phone
 npm run test:visual  # 14 visual baselines only (7 screenshots × 2 projects)
 npm run lint         # ESLint — 0 errors, 0 warnings
-npm run measure      # performance harness (dev server must be running)
+npm run measure      # performance harness against the dev server (must be running)
+npm run measure:prod # builds, serves dist/ with `vite preview`, and measures that
 ```
 
 Unit tests cover the rule engine with no DOM and no renderer: frame-rate
@@ -230,9 +234,16 @@ npm run test:e2e -- tests/e2e/controls.spec.ts --headed
 npm run test:e2e:ui
 ```
 
-A failure keeps its evidence in `test-results/`: a screenshot, a video, and — on
-the retry — a trace you can open with `npx playwright show-trace <file>.zip`,
-which shows every action, the console and the network in order.
+A failure keeps its evidence in `test-results/`: a screenshot, a video and a
+trace of the run itself — kept for the failed test, not only for a retry,
+because a failure on a local machine is exactly the one nobody can reproduce for
+you. Open it with `npx playwright show-trace <file>.zip`: every action, the
+console and the network, in order.
+
+Every run also writes a self-contained HTML report to `playwright-report/`
+(`npm run test:e2e:report` opens the last one), and
+[`docs/TEST-REPORT.md`](./docs/TEST-REPORT.md) is the committed summary of the
+last full run — the human-readable half of the delivery's "test reports".
 
 The suite is built to fail the same way twice:
 

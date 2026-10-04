@@ -299,3 +299,45 @@ export const headingDelta = (to: number, from: number): number => {
   if (delta < -Math.PI) return delta + Math.PI * 2;
   return delta;
 };
+
+/**
+ * Holds one key for exactly `simMs` of simulation time, sampling the hull's
+ * position every `stepMs` along the way — all inside a single evaluate.
+ *
+ * WHY THE PATH AND NOT THE DESTINATION. A drive made of separate round trips is
+ * measured in machine time as well as simulation time: the real loop keeps
+ * stepping while Playwright travels, so a loaded box adds distance the test
+ * never asked for, and the hull ends up somewhere the assertion never intended
+ * to describe. Sampling inside the call also makes the samples dense: at one
+ * sample per 50 ms a hull cannot cross a 64-unit tile between two of them, which
+ * is what lets a spec claim "it never entered the land" rather than "it was
+ * outside the land at the four moments I happened to look".
+ */
+export const drive = (
+  page: Page,
+  code: string,
+  simMs: number,
+  stepMs = 50,
+): Promise<readonly { readonly x: number; readonly y: number }[]> =>
+  page.evaluate(
+    ({ key, total, step }) => {
+      const hook = window.__pbTest;
+      if (hook === undefined) {
+        throw new Error('window.__pbTest is absent — start the match with startMatch() first');
+      }
+      const send = (type: 'keydown' | 'keyup'): void => {
+        window.dispatchEvent(new KeyboardEvent(type, { code: key, bubbles: true, cancelable: true }));
+      };
+
+      send('keydown');
+      const path: { x: number; y: number }[] = [];
+      for (let elapsed = 0; elapsed < total; elapsed += step) {
+        hook.advance(step);
+        const hull = hook.snapshot().player;
+        if (hull !== null) path.push({ x: hull.x, y: hull.y });
+      }
+      send('keyup');
+      return path;
+    },
+    { key: code, total: simMs, step: stepMs },
+  );

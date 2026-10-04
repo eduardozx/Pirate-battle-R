@@ -51,17 +51,23 @@ export default defineConfig({
    */
   workers: 2,
 
-  reporter: process.env.CI
-    ? [['list'], ['html', { open: 'never' }]]
-    : [['list']],
+  /* ALWAYS a report, not only in CI: the delivery asks for an HTML report, and a
+     `test:e2e:report` command that opens a file nobody generated is a command
+     that lies. The report lands in `playwright-report/` (git-ignored as a build
+     artifact; docs/TEST-REPORT.md is the committed, readable version). */
+  reporter: [['list'], ['html', { open: 'never' }]],
 
   use: {
     baseURL,
     /* Screenshots on failure only: a passing run should not write gigabytes. */
     screenshot: 'only-on-failure',
     video: 'retain-on-failure',
-    /* The trace is the fastest way to see what a failed step actually did. */
-    trace: 'on-first-retry',
+    /* The trace is the fastest way to see what a failed step actually did.
+       `retain-on-failure`, not `on-first-retry`: retries only happen in CI, so
+       the retry-based setting recorded no trace at all on a local machine — and
+       a failure on a local machine is exactly the one nobody can reproduce for
+       you. Kept in `test-results/`, opened with `npx playwright show-trace`. */
+    trace: 'retain-on-failure',
     /* Guards against an accidentally serialised suite. */
     actionTimeout: 15_000,
   },

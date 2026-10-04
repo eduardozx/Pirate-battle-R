@@ -16,7 +16,8 @@
     "test:e2e:ui": "playwright test --ui",
     "test:e2e:report": "playwright show-report",
     "test:visual": "playwright test tests/e2e/visual.spec.ts",
-    "measure": "node scripts/measure-performance.mjs"
+    "measure": "node scripts/measure-performance.mjs",
+    "measure:prod": "npm run build && node scripts/measure-performance.mjs --prod"
   },
   "dependencies": {
     "@tanstack/react-query": "^5.104.1",

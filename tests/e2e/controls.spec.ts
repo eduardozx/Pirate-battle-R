@@ -3,6 +3,7 @@ import { expect, test } from '@playwright/test';
 import { fastMatchUrl } from './support/app';
 import {
   advance,
+  drive,
   hold,
   insideSolid,
   readSnapshot,
@@ -84,26 +85,38 @@ test('an island stops the hull instead of yielding to it', async ({ page }) => {
   expect(heading).toBeGreaterThanOrEqual(-0.4);
   expect(heading).toBeLessThan(-0.3);
 
-  await page.keyboard.down('ArrowUp');
-  let intruder: string | null = null;
-  let deepest = hull.x;
-  for (let i = 0; i < 4 && intruder === null; i += 1) {
-    await advance(page, 500);
-    const passing = await readSnapshot(page);
-    const moving = thePlayer(passing);
-    deepest = Math.max(deepest, moving.x);
-    intruder = insideSolid(passing, moving);
-  }
-  await page.keyboard.up('ArrowUp');
+  /* The drive is ONE evaluate: two seconds of simulation with the key down,
+     sampled every 50 ms — see `drive` for why neither the distance nor the
+     samples can drift with machine load. */
+  const path = await drive(page, 'ArrowUp', 2000);
 
-  /* The centre of the hull must never sit inside a solid tile, and this is
-     checked DURING the drive — a pass-through could otherwise slip between the
-     last sample and the end of the test. */
+  let intruder: string | null = null;
+  let deepestBeside = Number.NEGATIVE_INFINITY;
+  for (const point of path) {
+    const sample = { ...hull, x: point.x, y: point.y };
+    if (intruder === null) intruder = insideSolid(start, sample);
+
+    /* Eastward progress is measured ONLY while the hull is at the island's own
+       latitude. Sailing round the north end is legal navigation and invisible to
+       a raw maximum of x; driving through the land is the failure this test is
+       about, and it can only happen while the two overlap in y. */
+    const besideIsland =
+      point.y >= central.bounds.y && point.y <= central.bounds.y + central.bounds.height;
+    if (besideIsland) deepestBeside = Math.max(deepestBeside, point.x);
+  }
+
+  /* The centre of the hull never sat inside a solid tile — checked at every
+     sample of the drive, not only at the end, so a hull that crossed the land
+     between two samples cannot slip through the assertion. */
   expect(intruder).toBeNull();
 
   const stopped = thePlayer(await readSnapshot(page));
   /* It really did drive at the land… */
   expect(stopped.x).toBeGreaterThan(hull.x + 30);
-  /* …and was held short of its face, all the way through. */
-  expect(deepest).toBeLessThan(westFace);
+  /* …while it was beside the island it never got past the western face: the land
+     held it short… */
+  expect(deepestBeside).toBeLessThan(westFace);
+  /* …and it came within touching distance of that face, rather than turning away
+     from it before ever making contact. */
+  expect(deepestBeside).toBeGreaterThan(westFace - 80);
 });

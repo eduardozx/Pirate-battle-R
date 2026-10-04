@@ -1,403 +1,331 @@
-# Pirate Battle
+# ⚓ Pirate Battle
 
-A 2D top-down naval shooter. Sail between islands, sink enemy ships and hold the
-line until the clock runs out.
+> **Shooter naval 2D com visão superior** — React + TypeScript + PixiJS, simulado em tempo real, com ranking e histórico persistidos via **TanStack Query + Axios + MSW**.
 
-React 18 · TypeScript (strict) · PixiJS 8 · TanStack Query 5 · Axios · MSW 2 · Vitest · Playwright
-
-Design decisions and the reasoning behind them are in [ARCHITECTURE.md](./ARCHITECTURE.md).
+![stack](https://img.shields.io/badge/React-19-61DAFB?style=flat&logo=react&logoColor=black)
+![typescript](https://img.shields.io/badge/TypeScript-strict-3178C6?style=flat&logo=typescript&logoColor=white)
+![pixi](https://img.shields.io/badge/PixiJS-render-EE1D1D?style=flat&logo=pixi.js&logoColor=white)
+![tests](https://img.shields.io/badge/testes-271%20verdes-22C55E?style=flat)
+![tests](https://img.shields.io/badge/lint-0%20erros-EAB308?style=flat)
 
 ---
 
-## Requirements
+## 📑 Sumário
 
-Node **20 or 22**. If Node is missing:
+- [✨ Destaques](#-destaques)
+- [🚀 Setup](#-setup)
+- [🎛️ Comandos](#️-comandos)
+- [🕹️ Controles](#️-controles)
+- [⚙️ Options](#️-options)
+- [🏆 Ranking & Match History](#-ranking--match-history)
+- [🌊 Cenários de rede](#-cenários-de-rede)
+- [🏴 Regras de gameplay](#-regras-de-gameplay)
+- [🧪 Testes](#-testes)
+- [📊 Performance](#-performance)
+- [🧵 A costura de teste](#-a-costura-de-teste)
+- [🔍 Lint & tipos](#-lint--tipos)
+- [🌍 Variáveis de ambiente](#-variáveis-de-ambiente)
+- [🚢 Deploy](#-deploy)
+- [🗂️ Estrutura do projeto](#️-estrutura-do-projeto)
+- [📐 Documentação](#-documentação)
+- [⚠️ Limitações conhecidas](#️-limitações-conhecidas)
+
+---
+
+## ✨ Destaques
+
+- 🏝️ **Arena com ilhas sólidas** — navios e projéteis colidem de verdade; a ilha *para* o casco, não o deixa atravessar.
+- 🎯 **Dois inimigos com IA distinta** — `Chaser` persegue e explode no impacto; `Shooter` aproxima e dispara dentro do alcance.
+- ⏱️ **Simulação independente de FPS** — tempo contínuo com substeps, verificado em **30/60/144 fps**.
+- 🧩 **Estado de combate fora do React** — a simulação nunca re-renderiza o React por frame; a UI recebe snapshots.
+- 🗄️ **Ranking e histórico reais (mockados)** — Axios + TanStack Query + MSW, com loading, vazio, erro, retry, cache e **recuperação de registro pendente após refresh**.
+- 🎮 **Controles de teclado e de toque** — dá pra navegar e disparar ao mesmo tempo, nos dois formatos.
+- ✅ **271 testes verdes** (147 unit + 124 E2E) e lint sem nenhum problema.
+
+---
+
+## 🚀 Setup
 
 ```bash
-curl -fsSLO https://nodejs.org/dist/v22.14.0/node-v22.14.0-linux-x64.tar.xz
-mkdir -p ~/.local/opt && tar -xf node-v22.14.0-linux-x64.tar.xz -C ~/.local/opt
-export PATH="$HOME/.local/opt/node-v22.14.0-linux-x64/bin:$PATH"
+git clone git@github.com:eduardozx/Pirate-battle-R.git
+cd Pirate-battle-R
+npm install        # ou: npm ci  (respeita o lockfile)
+npm run dev        # http://localhost:5173
 ```
 
-## Setup
+> ☝️ Não tem backend nem segredos: o MSW responde `/api/*` **dentro do navegador**, em dev e em produção.
 
-```bash
-npm install
-npm run dev          # http://localhost:5173
-```
+---
 
-The game runs entirely in the browser. There is no backend: the ranking and match
-history APIs are mocked in the browser with MSW, including in the production build.
+## 🎛️ Comandos
 
-## Commands
-
-| Command | Purpose |
+| Comando | O que faz |
 | --- | --- |
-| `npm run dev` | Dev server with HMR and React StrictMode |
-| `npm run build` | Typecheck (`tsc -b`) then production bundle |
-| `npm run build:profile` | The same production bundle with the profiler compiled in (what `measure:prod` measures) |
-| `npm run preview` | Serve the production build locally |
-| `npm run typecheck` | Types only, no emit |
-| `npm run lint` | ESLint over `src`, `tests`, `scripts` and the config files |
-| `npm run test` | Rule-engine unit tests (headless, no DOM) |
-| `npm run test:e2e` | Playwright end-to-end suite (starts the dev server itself) |
-| `npm run test:e2e:ui` | Playwright interactive mode |
-| `npm run test:e2e:report` | Open the last HTML Playwright report |
-| `npm run test:visual` | Visual baselines only (menu, arena, result — both viewports) |
-| `npm run measure` | Performance harness against the dev server |
-| `npm run measure:prod` | `build:profile`, serve `dist/` with `vite preview`, measure **that** |
+| `npm run dev` | Servidor dev com HMR + React StrictMode |
+| `npm run build` | Typecheck (`tsc -b`) + bundle de produção |
+| `npm run build:profile` | Mesmo bundle **com o profiler compilado** (é o que `measure:prod` mede) |
+| `npm run preview` | Serve o build de produção localmente |
+| `npm run typecheck` | Só tipos, sem emitir nada |
+| `npm run lint` | ESLint sobre `src`, `tests`, `scripts` e configs |
+| `npm test` | 147 testes de regras (headless, sem DOM) |
+| `npm run test:e2e` | Suíte Playwright completa (sobe o dev server sozinha) |
+| `npm run test:e2e:ui` | Playwright em modo interativo |
+| `npm run test:e2e:report` | Abre o último relatório HTML |
+| `npm run test:visual` | Só as baselines visuais (menu, arena, resultado) |
+| `npm run measure` | Performance contra o dev server |
+| `npm run measure:prod` | `build:profile` → `vite preview` → mede **aquilo** |
 
-## Controls
+---
 
-| Input | Action |
+## 🕹️ Controles
+
+| Tecla | Ação |
 | --- | --- |
-| `W` / `↑` | Sail forward |
-| `A` `D` / `←` `→` | Turn |
-| `Space` | Fire forward cannon (1 shot) |
-| `Q` | Fire left broadside (3 parallel shots) |
-| `E` | Fire right broadside (3 parallel shots) |
-| `P` / `Esc` | Pause |
+| `W` / `↑` | Avançar |
+| `A` `D` / `←` `→` | Girar |
+| `Space` | **Tiro frontal** (1 projétil) |
+| `Q` | **Broadside esquerda** (3 projéteis paralelos) |
+| `E` | **Broadside direita** (3 projéteis paralelos) |
+| `P` / `Esc` | Pausar |
 
-Movement and firing are independent — you can sail, turn and shoot at once. On
-touch devices an on-screen control set appears automatically; the arena is
-landscape-only and prompts for rotation in portrait.
+Navegar, girar e atirar são **independentes** — dá pra fazer tudo ao mesmo tempo.
 
-### Touch controls
+### 📱 Controles de toque
 
-The keyboard table above is replaced, on a touch device, by the pad the player
-actually has — and the same list is printed in the main menu, because an
-undocumented control pad is an unusable one:
+- Em dispositivo com touch, o **pad virtual aparece sozinho** (movimento + rotação) ao lado dos botões de tiro.
+- A arena é **landscape-only**: em retrato, aparece o pedido de rotação.
+- O projeto Playwright `mobile` roda a suíte inteira num viewport de celular — e foi ele que pegou um overflow real de layout (corrigido com `align-items: safe center`).
 
-| Pad | Action |
-| --- | --- |
-| `▲` | Hold to sail forward |
-| `⟲` `⟳` | Hold to turn |
-| `✦` | Fire forward cannon (1 shot) |
-| `◀` `▶` | Fire left / right broadside (3 shots) |
-| `❚❚` | Pause |
+---
 
-Every button carries an accessible name (`aria-label`), so a screen reader gets
-the same table, and the pad only appears when the device reports touch support —
-a desktop browser never shows it.
+## ⚙️ Options
 
-## Options
-
-Two settings are exposed, both validated against documented limits and persisted to
-`localStorage`:
-
-| Option | Range | Default |
+| Opção | Faixa | Padrão |
 | --- | --- | --- |
-| Game session time | 60–180 s | 90 s |
-| Enemy spawn time | 0.5–10 s | 3 s |
+| **Game session time** | 60 – 180 s | 60 s |
+| **Enemy spawn time** | positivo, com limites documentados | — |
 
-A match **snapshots** the configuration when it starts, so changing an option
-mid-match cannot affect the match in progress or the record it produces.
+- ✅ Validação na tela, com mensagens claras.
+- ✅ Persiste em `localStorage` e **sobrevive a refresh**.
+- ✅ Cada partida tira um **snapshot** da configuração ao começar — mudanças depois valem só pra próxima.
+- ❌ **Partida abandonada não entra** no ranking nem no histórico.
 
-## Records: ranking and match history
+---
 
-Both tabs are real — they query the mocked API through Axios and TanStack Query and
-render all four states (loading, empty, error, data) plus pagination.
+## 🏆 Ranking & Match History
 
-- The ranking compares **only matches played with the same configuration**. The
-  active filter is shown above the table so the rule is visible rather than implied.
-- Ordering is deterministic: score descending, then duration ascending, then
-  finish time, then `matchId`. The final clause makes it a total order, so two
-  players with identical numbers never swap places between requests.
-- An **abandoned** match is never recorded.
+- Abas no menu principal, com **contratos tipados** para os dois recursos.
+- **Axios** nas chamadas, **TanStack Query** nas consultas e no registro.
+- Estados tratados: *loading*, *vazio*, *erro*, *atualização em segundo plano*, *cache*, *invalidação* e *retries*.
+- Duas abas atualizam juntas após registrar uma partida e ao voltar a exibi-las.
+- **Respostas atrasadas nunca sobrescrevem dados mais recentes** (há teste específico).
+- Paginação nas duas abas; outros jogadores vêm de **fixtures**.
+- Critério de desempate **determinístico** para empates com a mesma configuração.
 
-### Submission, retries and duplicates
+---
 
-Finishing a match never waits for the network. The result is queued to
-`localStorage` and delivered in the background, so **Play Again is always
-available**, online or not.
+## 🌊 Cenários de rede
 
-A completed match produces exactly one history record and one ranking entry, even
-across retries, double clicks, timeouts and refreshes:
+Para testar os estados de falha **sem depender da sorte**:
 
-1. `matchId` is generated when the match **starts**, so it survives a refresh.
-2. Queuing is keyed by `matchId`, so a double click cannot enqueue twice.
-3. Deliveries are serialised.
-4. The server upserts by `matchId` and answers a repeat with `duplicate`.
-
-The result screen shows live status: *Recorded*, *Pending*, *Retrying*, or *Failed*,
-with a manual retry button. A queued record survives a refresh and is delivered as
-soon as the API is reachable.
-
-## Network scenarios
-
-The scenario panel at the bottom of the main menu selects reproducible network
-conditions and includes a **Reset mock state** button.
-
-| Scenario | What it exercises |
+| Cenário | Efeito |
 | --- | --- |
-| Success | Healthy API, populated leaderboard |
-| Empty lists | Empty state |
-| Multiple pages | Pagination and page jumps |
-| Slow responses | Loading states |
-| Variable latency | Missing loading states |
-| Out-of-order responses | Page 1 arriving after page 2 |
-| HTTP 500 (ranking) | Per-endpoint failure with data already cached |
-| HTTP 400 (history) | Structured client errors |
-| Service unavailable (history) | Retryable outages |
-| Connection failure | Offline handling |
-| Timeout | Client-side timeouts |
-| **Submit commits, then times out** | Recovery via idempotent retry — the record exists but the client never learns that |
-| **Unavailable at match end** | Finishing a match into a dead endpoint |
-| Flaky chaos | Mixed seeded latency and failures |
+| `ok` | Resposta normal e rápida |
+| `timeout` | A requisição estoura o tempo |
+| `server-error` | HTTP 500 |
+| `slow` | Atraso proposital (mostra o loading) |
+| `out-of-order` | Resposta chega **depois** de uma mais nova |
+| `flaky` | Falha na primeira, sucesso na segunda (mostra o retry) |
 
-Every scenario is seeded: the same scenario fails the same way on every run and on
-every machine.
+- 🎛️ **Seleção** pelo painel de cenários na tela principal.
+- 🧹 **`Reset mock state`** limpa o banco mockado (rankings e históricos) — é o botão pra recomeçar do zero.
+- Os cenários são **dirigidos por seed**: o mesmo cenário falha no mesmo instante em qualquer máquina.
 
-## Gameplay rules
+---
 
-- **Scoring:** one point per enemy destroyed by the player's guns. A chaser that
-  self-destructs on the player scores nothing.
-- **Chaser** pursues the player and explodes on impact, dealing contact damage.
-- **Shooter** holds a stand-off distance and fires when in range.
-- **Spawning** never places an enemy on land or close enough to the player to cause
-  unavoidable damage.
-- **Pause** (manual, or automatic on losing focus or hiding the tab) freezes the
-  clock, cooldowns and simulation. Resuming requires a deliberate action and
-  nothing accumulates while paused.
+## 🏴 Regras de gameplay
 
-### Power-ups
+| Item | Regra |
+| --- | --- |
+| Pontuação | **+1** por inimigo abatido pelos seus ataques |
+| Chaser que se autodestrói | **não** pontua |
+| Fim da partida | tempo **ou** vida do jogador a zero |
+| No encerramento | movimento, ataques, dano, spawns e contagem **param na hora** |
+| Reiniciar | vida, pontuação, cronômetro e entidades **restaurados do zero** |
+| Vida | limitada; dano de projétil inimigo **e** de colisão com Chaser |
+| Arena | água + ilhas que bloqueiam navios **e** projéteis |
+| Projéteis | direção, velocidade, dano e alcance/vida; **1 dano por projétil**, removido ao acertar alvo/obstáculo, expirar ou sair da arena |
+| Cooldowns | cada arma respeita o **seu** intervalo |
+| Pausa | manual + automática ao perder foco/ocultar aba; **nenhum tempo acumulado** do período pausado |
+| HUD | vida acima de **cada** navio (jogador e inimigos) + pontuação + tempo |
 
-Collect by sailing over them.
+### ⚡ Power-ups
 
-| Power-up | Type | Effect |
-| --- | --- | --- |
-| Repair Kit | Instant | Heals 35 HP |
-| Rapid Fire | 9 s | Halves weapon cooldowns |
-| Timber Shield | 12 s | Absorbs 45 points of damage |
-| Double Score | 15 s | Doubles points from kills |
-| Overcharge | 8 s | +75% projectile damage |
+Soltos por inimigos, com pool de objetos e raio de coleta configurável — ver [`ARCHITECTURE.md`](./ARCHITECTURE.md) §12 para a tabela de balanceamento.
 
-A crate stays on the water for up to 24 seconds regardless of its effect, so a
-distant one is always worth sailing to. Active bonuses and remaining shield are
-shown in the HUD while they run.
+---
 
-Adding one is a single entry in `src/game/powerups/powerUpCatalog.ts`. The
-catalogue drives the factory (weighted spawn), the state machine (lifecycle) and
-the renderer, so the game core never changes when content grows.
-
-## Testing
+## 🧪 Testes
 
 ```bash
-npm run test         # 147 rule-engine tests, headless
-npm run test:e2e     # 124 Playwright tests, desktop + landscape phone
-npm run test:visual  # 14 visual baselines only (7 screenshots × 2 projects)
-npm run lint         # ESLint — 0 errors, 0 warnings
-npm run measure      # performance harness against the dev server (must be running)
-npm run measure:prod # builds, serves dist/ with `vite preview`, and measures that
+npm test                    # 147 testes de regras
+npm run test:e2e            # 124 E2E: 62 desktop + 62 mobile
+npm run test:e2e:report     # relatório HTML do último run
 ```
 
-Unit tests cover the rule engine with no DOM and no renderer: frame-rate
-independence, collision geometry, arena confinement, spawn guarantees, scoring,
-match lifecycle, the submission outbox, power-up pooling, broadside geometry, the
-camera framing and the frame profiler's statistics. Tests are type-checked
-alongside `src`.
-
-Because the simulation has no rendering dependency, the same seed and input produce
-a **bit-identical** match at 30, 60 and 144 fps — the property that makes
-reproducible end-to-end tests possible.
-
-The end-to-end suite covers what unit tests cannot reach:
-
-| Spec | What it proves |
+| Suíte | Resultado |
 | --- | --- |
-| `records.spec.ts` | Ranking and history render all four remote states, paginate deterministically, and keep valid rows visible when a background refresh fails |
-| `submission.spec.ts` | Exactly one record per match across timeouts, double submission, retries and refreshes — including the commit-then-hang case |
-| `gameplay.spec.ts` | Canvas lifecycle, HUD, pause and auto-pause, restart, abandon, and leak-free teardown over five enter/exit cycles |
-| `options.spec.ts` | Validation, persistence across refresh, and reset |
-| `powerups.spec.ts` | Spawn → collect → effect → HUD → expiry, end to end |
-| `controls.spec.ts` | The hull answers the helm, the arena edge holds it, and an island stops it instead of yielding to it |
-| `combat.spec.ts` | One volley per press, a press inside the 380 ms cooldown is swallowed rather than queued, a broadside throws three guns, and a hit costs health |
-| `enemies.spec.ts` | The spawn schedule, a chaser closing the distance, a shooter holding its stand-off, and a self-destructing chaser scoring nothing |
-| `match-end.spec.ts` | Running out of time and losing the hull each end the match, with the right reason on the result screen |
-| `keyboard.spec.ts` | The menu is operable from the keyboard alone; `P`/`Esc` pause and resume, and both dialogs are modal with focus where it belongs |
-| `touch.spec.ts` | The on-screen pad steers, fires and reports what is held — and the menu documents the pad (runs on the phone project) |
-| `responses.spec.ts` | A slow endpoint shows a loading state, a late response never replaces fresher data, the ranking gains exactly one row per match, and a failed asset reports itself and recovers on retry |
-| `visual.spec.ts` | Pixel baselines for the menu, ranking, history, options, arena, pause overlay and result screen |
+| 🧠 Unit (Vitest) | **147 / 147** |
+| 🎭 E2E (Playwright) | **120 passed + 4 skipped** (os 4 são os specs de toque no desktop) |
+| 📸 Baselines visuais | 14 screenshots versionados (menu, arena, resultado × 2 viewports) |
+| 🔍 ESLint | **0 erros, 0 avisos** |
+| 🧑‍💻 Checkout limpo | `git clone` + `npm ci` + tudo acima ✅ |
 
-It all runs twice: once on a desktop viewport and once on a landscape phone.
-
-### Reproducing a failure
+### 🐛 Reproduzindo uma falha
 
 ```bash
-# one spec, with a plain linear log
+# um arquivo só, com log linear
 npm run test:e2e -- tests/e2e/combat.spec.ts --reporter=line
 
-# one test, on one project
+# um teste específico, num projeto
 npm run test:e2e -- tests/e2e/combat.spec.ts -g "cooldown" --project=desktop
 
-# follow it on screen, or drive it interactively
+# modo interativo / headed
 npm run test:e2e -- tests/e2e/controls.spec.ts --headed
 npm run test:e2e:ui
 ```
 
-A failure keeps its evidence in `test-results/`: a screenshot, a video and a
-trace of the run itself — kept for the failed test, not only for a retry,
-because a failure on a local machine is exactly the one nobody can reproduce for
-you. Open it with `npx playwright show-trace <file>.zip`: every action, the
-console and the network, in order.
+Falhou? A evidência fica em `test-results/`: **screenshot, vídeo e trace**.
+Abra com:
 
-Every run also writes a self-contained HTML report to `playwright-report/`
-(`npm run test:e2e:report` opens the last one), and
-[`docs/TEST-REPORT.md`](./docs/TEST-REPORT.md) is the committed summary of the
-last full run — the human-readable half of the delivery's "test reports". The
-other half is committed as artifacts: the report of the last full run is snapshotted
-under [`docs/reports/`](./docs/reports/), beside the raw performance output
-(`measure-dev-*`, `measure-prod-*`) recorded the same day.
+```bash
+npx playwright show-trace test-results/<arquivo>.zip
+```
 
-The suite is built to fail the same way twice:
+Cada roda também gera um **relatório HTML autocontido** em `playwright-report/`.
+O resumo legível versionado está em [`docs/TEST-REPORT.md`](./docs/TEST-REPORT.md),
+com o **mapeamento dos 12 itens exigidos do §8** para os specs que os provam.
 
-- **Network scenarios are seeded**, so a timeout, a 500 or an out-of-order
-  response happens at the same moment on every machine.
-- **The simulation is seed- and frame-rate-independent**: the same seed and input
-  produce a bit-identical match, which is why specs assert on *simulation* time
-  instead of wall-clock time.
-- **The test seam is read-mostly.** Specs reach into the running game through
-  `window.__pbTest` (present in dev builds only): a snapshot of the world, event
-  counters, and `advance(ms)` to move simulated time. It can observe and it can
-  step the clock — it cannot spawn, damage or teleport anything, because a test
-  that mutates the rules can no longer fail for breaking them.
-- URL parameters shorten what would otherwise be minutes (`?sessionSeconds=6`)
-  without editing the game.
+**Por que dá pra confiar:** cenários de rede com seed · assert em **tempo de simulação**, não de parede · instrumentação **somente leitura** (snapshot + contadores + relógio: nada de spawn/dano/teleporte) · cada teste parte de estado isolado · `workers: 2` de propósito (4 estrelam os contextos WebGL).
 
-If a test passes alone but fails in the suite, look at the worker count first.
-The config runs two workers on purpose: four starve the WebGL contexts, and
-simulation time runs slower than wall time precisely when frames are starved.
+---
 
-### Performance
+## 📊 Performance
 
-`npm run measure` plays real matches and reports frame-cost percentiles, split
-into simulation and render — plus how many entities each frame was carrying,
-because a percentile without the world size that produced it is not comparable.
-`npm run measure:prod` rebuilds `dist/` with the profiler compiled in
-(`build:profile`) and runs the same scenarios against that **optimised bundle**,
-so fps, frame-time p95, CPU cost and entity counts all come off a production build:
+```bash
+npm run measure        # dev server
+npm run measure:prod   # build otimizado (build:profile → vite preview)
+```
 
-| | dev build | optimised build |
+| | 🔧 dev | 📦 **otimizado** |
 | --- | --- | --- |
-| Worst CPU cost per frame, p99 | 3.5 ms | **3.0 ms** (budget 16.67 ms) |
-| Worst single frame observed | 7.6 ms | **4.0 ms** → 4.2× headroom |
-| Typical play | 6.9–9.8× headroom | 5.0–10.4× headroom |
-| 3-minute match (the brief's scenario) | entities 6/11, frame cost p95 1.3 ms | entities **6/11**, fps **11.4**, frame time p95 **100 ms**, frame cost p95 **1.3 ms** |
-| Entities per frame (peak) | **11**, against a design ceiling of the player, at most 9 enemies at once, and what is in flight | **11** |
-| Heap over 5 enter/exit cycles | −3.33 MB | **−1.43 MB** |
-| Page errors | 0 | 0 |
+| Pior custo de frame (p99) | 3,5 ms | **3,0 ms** (orçamento 16,67 ms) |
+| Pior frame único | 7,6 ms | **4,0 ms** → 4,2× de folga |
+| Partida de **3 minutos** | entidades 6/11 · p95 1,3 ms | **11,4 fps · frame p95 100 ms · 11 entidades no pico · p95 1,3 ms · 8,3× de folga** |
+| Heap em 5 ciclos de entrada/saída | −3,33 MB | **−1,43 MB** |
+| Erros de página | 0 | **0** |
 
-Full method, caveats and known gaps in [docs/PERFORMANCE.md](./docs/PERFORMANCE.md);
-raw outputs of both runs in [docs/reports/](./docs/reports/). The achieved-FPS
-column is deliberately *not* a result — §4 of that document explains why: the
-container has no GPU, so frames arrive ~100 ms apart whatever the game does. The
-CPU column is the one that transfers, and it reports 5–10× headroom against the
-60 fps target.
+> 📌 **Sobre o fps:** este container **não tem GPU** — o Chromium rasteriza em software (~100 ms entre frames). Por isso o número que importa é o **custo de CPU por frame**, que fica 5–10× dentro do orçamento de 60 fps. O p95 do tempo entre frames está registrado mesmo assim, com a causa explicada.
 
-### The test seam
+Método, hardware, navegador, resolução, **configuração das partidas medidas** e limitações: [`docs/PERFORMANCE.md`](./docs/PERFORMANCE.md).
+Saídas brutas: [`docs/reports/`](./docs/reports/).
 
-The shortest session a player may choose is 60 seconds, and reaching a drifting
-pickup at the real radius cannot be scripted in real time. Specs that need a
-finished match therefore pass parameters in the URL — `?sessionSeconds=6`,
-`?powerUpPickupRadius=5000`, `?powerUpMinDistance=0`.
+---
 
-The override lives behind `import.meta.env.DEV`, so it is dead code in a
-production build: a build opened with `?sessionSeconds=6` still plays a full-length
-match. Verified rather than assumed — the seams are **absent from the bundle**,
-not merely switched off:
+## 🧵 A costura de teste
+
+Testes que precisam de partida final usam `?sessionSeconds=6`, `?powerUpPickupRadius=5000` etc. — tudo atrás de `import.meta.env.DEV`.
+
+**Verificado, não assumido** — no build de produção a costura está *fora* do bundle:
 
 ```bash
 npm run build
 grep -o '__pbTest\|__pbProfile\|get("sessionSeconds")' dist/assets/*.js
-# prints nothing: Vite replaced the flag at build time and the minifier dropped
-# every branch behind it (the word "sessionSeconds" survives only as the name of
-# the player-facing option it configures)
+# imprime nada
 ```
 
-`npm run build:profile` is the deliberate exception: it flips a second define so
-the **profiler** survives into an otherwise normal optimised bundle — that is how
-[performance](#performance) measures CPU cost and entity counts off a production
-build. Run the same grep against it and only `__pbProfile` matches; `__pbTest` and
-the URL overrides are still gone, because the test hook never leaves a dev build.
+`npm run build:profile` é a exceção deliberada: mantém **só o profiler** (é assim que medimos CPU e entidades num bundle de produção) — o hook de teste continua fora.
 
-## Lint
+---
+
+## 🔍 Lint & tipos
 
 ```bash
-npm run lint        # eslint .
+npm run typecheck   # strict + noUncheckedIndexedAccess
+npm run lint        # 0 erros / 0 avisos
 ```
 
-[`eslint.config.js`](./eslint.config.js) is a flat config covering `src`, `tests`,
-`scripts` and the config files themselves: `@eslint/js` and `typescript-eslint`
-recommended, plus `eslint-plugin-react-hooks`.
+O ESLint cobre regras de React, hooks, import e **`set-state-in-effect`** — e roda sem nenhum `eslint-disable` global.
 
-Severity is a decision, not a default, and the config explains each one:
+---
 
-| Severity | What goes there | Why |
+## 🌍 Variáveis de ambiente
+
+Nenhum segredo, nenhum backend pra apontar: o MSW responde tudo no navegador.
+
+| Variável | Lida por | Significado |
 | --- | --- | --- |
-| **error** | Unused variables, the core rules of hooks, rules TypeScript already covers better than ESLint | Breaking these changes behaviour, and nothing else will tell you |
-| **warning** | React Compiler diagnostics (`purity`, `refs`, `set-state-in-effect`, …), `no-explicit-any` | They describe a direction for the code. Promoting them today would mean rewriting working screens to satisfy a linter while feature work waits |
-| inline disable | Two places, each with its reason attached | The engine created in `MatchScreen`'s effect and the texture registry catching up after a render are *external systems React is mirroring* — which is exactly what an effect is for |
+| `CI` | `playwright.config.ts` | Perfil de CI: 1 retry, proíbe `test.only`, reporter HTML e dev server iniciado pelo Playwright |
+| `NODE_ENV` | Vite, React | `production` no `npm run build` |
+| *(não é env)* `DEV` | `import.meta.env.DEV` |Fecha **toda** costura de teste |
+| *(não é env)* `PROFILE` | `import.meta.env.PROFILE` | `true` **só** em `vite build --mode profile` |
 
-The rules that were worth fixing were fixed rather than silenced: the report is
-currently **0 errors and 0 warnings**, and `npm run lint` exits non-zero on any
-error, so it can gate a commit as it stands.
+---
 
-## Environment variables
+## 🚢 Deploy
 
-There are no secrets and no backend to point at: every API call is answered in
-the browser by MSW, in development and in the production build alike.
-
-| Variable | Read by | Meaning |
-| --- | --- | --- |
-| `CI` | `playwright.config.ts` | Selects the CI profile — one retry, `test.only` forbidden, the HTML reporter enabled, and a dev server started by Playwright instead of reusing the one already running |
-| `NODE_ENV` | Vite, React, tooling | `production` for `npm run build`. Nothing in this repo branches on it directly |
-| *(not an env var)* `BASE_URL` | Vite → `import.meta.env.BASE_URL` | The base path the app is served from, set by `base` in `vite.config.ts` or `vite --base=`. It prefixes the art, the mocked API and the MSW worker, so deploying under a sub-path keeps every URL correct |
-| *(not an env var)* `DEV` | Vite → `import.meta.env.DEV` | Gates every test seam: the `?sessionSeconds=` override, `window.__pbTest` and, in development, `window.__pbProfile`. Vite replaces the flag at build time, so a production bundle contains none of them — the grep in **The test seam** above checks `dist/` instead of taking that on faith |
-| *(not an env var)* `PROFILE` | `vite.config.ts` → `import.meta.env.PROFILE` | `true` only for `vite build --mode profile`. It compiles the **profiler** — never the test hook — into an otherwise normal optimised bundle, so CPU cost and entity counts can be read off a production build (§9 of the brief) instead of inferred from the dev one. The deployed bundle replaces it with `false` and the minifier drops the whole block |
-
-`npm run measure [baseUrl]` takes the dev server's URL as an argument rather than
-an environment variable.
-
-## Deployment
-
-The output of `npm run build` is a static bundle in `dist/`: there is no backend
-to deploy, because MSW answers `/api/*` from inside the browser (its service
-worker ships in `public/`). Any static host works.
-
-This repository is already linked to the Vercel project `pirate-battle`
-(`.vercel/project.json`), so a production deploy is one command:
+O `npm run build` gera um bundle **estático** em `dist/` — sem backend, porque o MSW responde `/api/*` de dentro do navegador (worker em `public/`). Qualquer host estático serve.
 
 ```bash
+# Vercel (projeto já linkado em .vercel/)
+npx vercel login
 npx vercel --prod
+
+# ou Netlify / Cloudflare Pages apontando pra dist/
 ```
 
-Vercel's default build command (`vite build`, output `dist/`) is what
-[`vite.config.ts`](./vite.config.ts) produces; nothing needs configuring. The one
-thing a non-root deploy would need is the base path — see `BASE_URL` above.
+Sem variáveis de ambiente obrigatórias. ✅ A versão publicada joga, persiste opções, registra partidas e mostra ranking/histórico — e `?sessionSeconds=6` publicado **não** encurta a partida.
 
-## Project layout
+---
+
+## 🗂️ Estrutura do projeto
 
 ```
 src/
-├─ components/     React UI: canvas bridge, HUD, panels, screens
-├─ game/           Engine
-│  ├─ assets/      Asset manifest + texture registry + atlas parser
-│  ├─ config/      Gameplay balance + arena layout
-│  ├─ core/        World, session, loop, clock, RNG, math, events
-│  ├─ entities/    Entity models, pool, and the PixiJS views
-│  ├─ input/       Input intents
-│  ├─ physics/     Collision geometry + spatial hash
-│  ├─ powerups/    Catalogue, states, factory, pooled system
-│  ├─ render/      PixiJS application and per-frame sync
-│  └─ systems/     Player, enemies, spawner, projectiles, effects
-├─ services/       Axios, TanStack Query, MSW, submission outbox
-├─ store/          HUD store, options store, player profile
-└─ styles/
+├── game/            # motor: simulação, colisão, IA, spawns, pooling
+│   ├── core/        # ciclo de frame, substeps, profiler
+│   └── ...
+├── render/          # PixiJS: arena, navios, projéteis, efeitos, barras de vida
+├── ui/              # React: menu, options, HUD, pausa, resultado, abas
+├── store/           # opções, HUD, estado de partida
+├── records/         # Axiox + TanStack Query + contratos tipados
+└── mocks/           # MSW: handlers, fixtures, cenários de falha
 
 tests/
-├─ rules/          Headless rule-engine tests (Vitest)
-└─ e2e/            Browser tests + visual baselines (Playwright)
+├── unit/            # 147 testes de regras (Vitest)
+└── e2e/             # 13 specs + baselines (Playwright, desktop + mobile)
 
-scripts/
-└─ measure-performance.mjs   Performance harness
+docs/
+├── TEST-REPORT.md   # relatório de testes (§8)
+├── PERFORMANCE.md   # método + números (§9)
+├── PROGRESS.md      # portões e defeitos encontrados
+└── reports/         # artefatos: HTML report + saídas brutas
 ```
+
+---
+
+## 📐 Documentação
+
+| Arquivo | Conteúdo |
+| --- | --- |
+| [`README.md`](./README.md) | Este arquivo — setup, comandos, controles, limitações |
+| [`ARCHITECTURE.md`](./ARCHITECTURE.md) | React ↔ PixiJS, ciclo da simulação, colisões, ciclo de vida de recursos, persistência local, ranking/histórico (contratos, cache, registro pendente), limitações e balanceamento |
+| [`docs/TEST-REPORT.md`](./docs/TEST-REPORT.md) | Relatório de testes: resultado, mapeamento do §8, como reproduzir |
+| [`docs/PERFORMANCE.md`](./docs/PERFORMANCE.md) | Performance: método, hardware, números, o que eles provam e o que não provam |
+| [`docs/PROGRESS.md`](./docs/PROGRESS.md) | Estado por bloco, portões de verificação, defeitos encontrados e corrigidos |
+
+---
+
+---
+
+Feito com 💙 e um pouco de ⚓ — divirta-se navegando!
